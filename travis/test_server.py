@@ -148,18 +148,23 @@ def get_server_script(server_path):
     return 'openerp-server'
 
 
-def get_addons_to_check(travis_build_dir, odoo_include, odoo_exclude):
+def get_addons_to_check(
+        travis_build_dir, odoo_include, odoo_exclude, odoo_include_extra=None):
     """
     Get the list of modules that need to be installed
     :param travis_build_dir: Travis build directory
     :param odoo_include: addons to include (travis parameter)
     :param odoo_exclude: addons to exclude (travis parameter)
+    :param odoo_include_extra: combine extra addons with
+        travis_build_dir addons (travis parameter) (default: {None})
     :return: List of addons to test
     """
     if odoo_include:
         addons_list = parse_list(odoo_include)
     else:
         addons_list = get_modules(travis_build_dir)
+        if odoo_include_extra:
+            addons_list.extend(parse_list(odoo_include_extra))
 
     if odoo_exclude:
         exclude_list = parse_list(odoo_exclude)
@@ -304,6 +309,7 @@ def main(argv=None):
     odoo_unittest = str2bool(os.environ.get("UNIT_TEST"))
     odoo_exclude = os.environ.get("EXCLUDE")
     odoo_include = os.environ.get("INCLUDE")
+    odoo_include_extra = os.environ.get("INCLUDE_EXTRA")
     options = os.environ.get("OPTIONS", "").split()
     install_options = os.environ.get("INSTALL_OPTIONS", "").split()
     server_options = os.environ.get('SERVER_OPTIONS', "").split()
@@ -346,9 +352,12 @@ def main(argv=None):
         'addons_path': addons_path if os.environ.get("MQT_DEP", "OCA") == "OCA" else "",
         'data_dir': data_dir,
     }, odoo_version)
-    tested_addons_list = get_addons_to_check(travis_build_dir,
-                                             odoo_include,
-                                             odoo_exclude)
+    tested_addons_list = get_addons_to_check(
+        travis_build_dir,
+        odoo_include,
+        odoo_exclude,
+        odoo_include_extra=odoo_include_extra
+    )
     tested_addons = ','.join(tested_addons_list)
 
     print("Working in %s" % travis_build_dir)
