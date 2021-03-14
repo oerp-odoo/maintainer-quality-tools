@@ -133,9 +133,17 @@ def get_addons_path(travis_dependencies_dir, travis_build_dir, server_path):
     :param travis_dependencies_dir: Travis dependencies directory
     :param travis_build_dir: Travis build directory
     :param server_path: Server path
+
+    Environment variable PATH_SUBMODULES is checked to also include
+    submodule paths (relative to travis_build_dir).
     :return: Addons path
     """
     addons_path_list = get_addons(travis_build_dir)
+    PATH_SUBMODULES = os.environ.get('PATH_SUBMODULES')
+    if PATH_SUBMODULES:
+        for path in PATH_SUBMODULES.replace(' ', '').split(','):
+            path_submodule = os.path.join(travis_build_dir, path)
+            addons_path_list.extend(get_addons(path_submodule))
     addons_path_list.extend(get_addons(travis_dependencies_dir))
     addons_path_list.append(os.path.join(server_path, "addons"))
     addons_path = ','.join(addons_path_list)
